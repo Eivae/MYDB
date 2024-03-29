@@ -30,6 +30,13 @@ mvn exec:java -D exec.mainClass="top.guoziyang.mydb.backend.Launcher" -D exec.ar
 
 >> TM 通过维护 XID 文件来维护事务的状态，并提供接口供其他模块来查询某个事务的状态。
 
+这部分的思路：
+- 先写一个接口 TransactionManager ，在这个接口中定义一些接口，再定义一些方法，如创建TM对象和XID文件的方法
+- 在 TransactionManagerImpl 中检查XID文件是否合法，并实现接口中各个的抽象方法
+
+
+第一步里的创建TM对象的方法不是在TransactionManagerImpl中调用的，而是在调用这个方法的类中用到的，这个方法是为了创建TM的，即实现类的实例的，如果放在实现类里，则只有创建实例了才能调用了，这就矛盾了，除非在实现类里用static修饰这个方法。但还是放接口里好一些，这样每个实现了这个接口的类都能够创建TM了，而且create方法返回的就是一个TransactionManagerImpl对象，凡在TransactionManagerImpl里就会出现调用类里的方法返回类的对象的情况，有点怪异。）
+
 ### XID 文件
 下面主要是规则的定义了。<br>
 <br>
