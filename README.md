@@ -130,6 +130,11 @@ Data Manager 是MYDB中最底层的模块<br>
 
 **问题：上层通过传下一个long型整数来表示需要调用的页，这个整数到底是个啥？** <br>
 <br>
+应该就是页号，在innodb存储引擎中，一个区有1M，一页有16K，因此有64页，页号用int来表示应该就足够了，是0-63吗？每个区的页号都是单独的？<br>
+<br>
+
+AtomicInteger pageNumbers可以转换为int：`pageNumbers.intValue()`。如果原来的值超过了int的范围，就会溢出。<br>
+<br>
 
 
 #### 接口和实现类的一些问题
