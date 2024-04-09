@@ -145,7 +145,8 @@ AtomicInteger pageNumbers可以转换为int：`pageNumbers.intValue()`。如果�
 如果用的是接口类型来引用对象，而实现类中有自己单独的方法，那么可以通过向下转型来使用实现类的方法。<br>
 <br>
 
-
+一般用父类之类的来做引用，可以使得它的包容性更强？比如要返回 List<List<Integer>> ，那么 List<Integer> 既可以是 List<Integer> tmp = new ArrayList<>() ，又可以是 LinkedList<Integer> tmp = new LinkedList<>(); 因为他们都实现了List接口？（这部分写在LeetCode笔记里）<br>
+<br>
 
 
 
