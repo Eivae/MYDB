@@ -123,8 +123,11 @@ Data Manager 是MYDB中最底层的模块<br>
 
 理清这一小节的两个包page和pageCache中的类的关系：
 - 1、page 接口中的Page定义了页面结构，里面包含了一些抽象方法，定义了页面结构具有的一些功能，比如锁、是否为脏页、页号、页中的数据等等
+
 - 2、pageImpl 实现了page接口，除了Page中的一些内容外，还包含了一个 PageCache 的字段，它用于在拿到 Page 的引用时可以快速对这个页面的缓存进行释放操作（也就是pageIml里的release方法要用到）。
+
 - 3、PageCache 接口定义了页面缓存应该具有的一些功能（同第1点类似），比如创建新的页、得到页、释放页等，另外，还定义了 create 和 open 两个方法，用于外部创建或打开一个数据库文件对应页面缓存？
+
 - 4、pageCacheImpl 实现了 PageCache接口，并继承了引用计数缓存框架 AbstractCache。如何把数据源中的数据放入缓存？利用 AbstractCache 中的 getForCache() 方法，释放则用 releaseForCache 方法，因此在 pageCacheImpl 中还要实现这两个抽象方法。
 
 
@@ -147,6 +150,31 @@ AtomicInteger pageNumbers可以转换为int：`pageNumbers.intValue()`。如果�
 
 一般用父类之类的来做引用，可以使得它的包容性更强？比如要返回 List<List<Integer>> ，那么 List<Integer> 既可以是 List<Integer> tmp = new ArrayList<>() ，又可以是 LinkedList<Integer> tmp = new LinkedList<>(); 因为他们都实现了List接口？（这部分写在LeetCode笔记里）<br>
 <br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
