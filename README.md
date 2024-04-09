@@ -154,12 +154,25 @@ AtomicInteger pageNumbers可以转换为int：`pageNumbers.intValue()`。如果�
 
 
 
+## 日志文件与恢复策略
+MYDB 提供了崩溃后的数据恢复功能。DM 层在每次对底层数据操作时，都会记录一条日志到磁盘上。在数据库奔溃之后，再次启动时，可以根据日志的内容，恢复数据文件，保证其一致性。<br>
+<br>
 
+日志的二进制文件，按照如下的格式进行排布：
 
+```
+[XChecksum][Log1][Log2][Log3]...[LogN][BadTail]
+```
 
+其中 XChecksum 是一个四字节的整数，是对后续所有日志计算的校验和。Log1 ~ LogN 是常规的日志数据，BadTail 是在数据库崩溃时，没有来得及写完的日志数据，这个 BadTail 不一定存在。
 
+每条日志的格式如下：
 
+```
+[Size][Checksum][Data]
+```
 
+其中，Size 是一个四字节整数，标识了 Data 段的字节数。Checksum 则是该条日志的校验和。
 
 
 
