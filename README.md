@@ -301,7 +301,39 @@ MVCC 的实现，使得 MYDB 在撤销或是回滚事务很简单：只需要将
 读提交是允许版本跳跃的，而可重复读则是不允许版本跳跃的。<br>
 <br>
 
-解决版本跳跃的思路也很简单：如果 Ti 需要修改 X，而 X 已经被 Ti 不可见的事务 Tj 修改了，那么要求 Ti 回滚。
+解决版本跳跃的思路也很简单：如果 Ti 需要修改 X，而 X 已经被 Ti 不可见的事务 Tj 修改了，那么要求 Ti 回滚。<br>
+<br>
+
+
+
+
+### VM的实现
+VM 层通过 VersionManager 接口，向上层提供功能。接口都能像上层提供功能？<br>
+<br>
+
+VM 的实现类还被设计为 Entry 的缓存（实现类起到了缓存作用？），所以需要继承 AbstractCache<Entry>。DM 的实现类是 DataItem 的缓存？<br>
+<br>
+
+VM继承了 AbstractCache<Entry>，但缓存的功能体现在哪？似乎没看出来？可能是这样理解的，每一个继承了AbstractCache的类都自带了缓存功能，有相应的字段和方法（核心是HashMap<Long, T> cache），因此实际上已经是缓存了。
+
+pc中的缓存键值对是 pgno——Page，DM中的缓存的键值对是uid——DataItem<br>
+<br>
+
+DM里面的pc是PageCache，页面缓存，因为PageCacheImpl类继承了AbstractCache，实际缓存时其中的 HashMap<Long, Page> cache，也就是它缓存的是页号与页（页是一个类，包含了数据与方法）；DM中的缓存是 HashMap<Long, DataItem> cache，缓存的是通过pc读取到的page对象，然后将page中的data包装成DataItem，放入缓存并返回，读的时候，如果pc缓存中已经有相应的page了，就直接从缓存中拿，如果没有，就需要从db文件中读取、放入pc缓存并返回给DM，DM再包装成DataItem，放入DM中的缓存并返回。<br>
+<br>
+
+也就是说有两级缓存。整体结构是，db文件（磁盘）——pc——DM缓存。下次DM需要读取某个DataItem时，直接利用uid从缓存中读取，如果缓存中没有，再调用getForCache，从pc中拿，而从pc中怎么拿就是pc的事了，pc缓存中有就直接返回，没有就还是从db中读并写入缓存。<br>
+<br>
+
+总结下来，VM中的读取删除数据本质上都是借用DM中的方法（毕竟DM是数据管理器，所有的数据操作都要经过他，VM实现的是版本的管理）<br>
+<br>
+
+
+abort 事务的方法则有两种，手动和自动。手动指的是调用 abort() 方法，而自动，则是在事务被检测出出现死锁时，会自动撤销回滚事务；或者出现版本跳跃时，也会自动回滚。
+
+
+
+
 
 
 
