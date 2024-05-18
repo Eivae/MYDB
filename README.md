@@ -362,4 +362,34 @@ assertThrows(RuntimeException.class, ()->lt.add(1, 2));
 
 
 
+### 二叉树索引
+二叉树由一个个 Node 组成，每个 Node 都存储在一条 DataItem 中。结构如下：
+
+```
+[LeafFlag][KeyNumber][SiblingUid]
+[Son0][Key0][Son1][Key1]...[SonN][KeyN]
+```
+
+最后的一个 KeyN 始终为 MAX_VALUE，以此方便查找。这个方便体现在哪里？
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
