@@ -382,6 +382,8 @@ assertThrows(RuntimeException.class, ()->lt.add(1, 2));
 
 最后的一个 KeyN 始终为 MAX_VALUE，以此方便查找。这个方便体现在哪里？<br>
 <br>
+答：要理解这个方便性，首先需要注意，这个keyN并不是每一个节点都会有的一个key，而是整个B+树中的最后一个key。如果我们想要搜索B+树中key的范围在left到right之间（均含）的数据，我们当然调用树中的search方法。同样，如果我们想要整个树中的所有数据（就是当没有Where语句时），那left=0，而right则是那个最大的key，但显然，我们不能很方便地得到这个最大的key，然后再search。如果keyN始终为MAX_VALUE的话，只要取right为MAX_VALUE就能得到所有key对应的行数据了，但会不会多了一行空数据（对应keyN）？另外，有了这个最大的keyN，在进行insert操作时，所有的新数据都会插在keyN前面，因为他们的key一定小于MAX_VALUE（keyN）。<br>
+<br>
 
 一棵树的高度就是直觉上的那个高度，也就是说包含了根节点，比如一个高度为2的B+树就是一个根节点和下面的叶子结点。<br>
 <br>
@@ -393,7 +395,7 @@ assertThrows(RuntimeException.class, ()->lt.add(1, 2));
 Tokenizer 类，对语句进行逐字节解析，根据空白符或者上述词法规则，将语句切割成多个 token。对外提供了 peek()、pop() 方法方便取出 Token 进行解析。<br>
 <br>
 
-Parser 类则直接对外提供了 Parse(byte[] statement) 方法，核心就是一个调用 Tokenizer 类分割 Token，并根据词法规则包装成具体的 Statement 类并返回。<br>
+Parser 类则直接对外提供了 Parse(byte[] statement) 方法，核心就是一个调用 Tokenizer 类分割 Token，并根据词法规则包装成具体的 Statement 类（比如Where类、Select类，在TBM中会有具体的方法来利用这些数据结构中的数据，根据这些输入的条件，再调用VM中的方法来实现begin、commit、update、delete、insert等功能，这些功能就是TM接口中的提供给外界的抽象方法）并返回。<br>
 <br>
 
 
@@ -423,6 +425,62 @@ TypeName 为字段的类型，限定为 int32、int64 和 string 类型。如果
 [TableName][NextTable]
 [Field1Uid][Field2Uid]...[FieldNUid]
 ```
+
+这里由于每个 Entry 中的数据，字节数是确定的，于是无需保存字段的个数。（**为什么？？？**）<br>
+<br>
+
+
+由于 TBM 的表管理，使用的是链表串起的 Table 结构，所以就必须保存一个链表的头节点，即第一个表的 UID，这样在 MYDB 启动时，才能快速找到表信息。<br>
+<br>
+
+MYDB 使用 Booter 类和 bt 文件，来管理 MYDB 的启动信息，虽然现在所需的启动信息，只有一个：头表的 UID。<br>
+<br>
+
+Booter 类对外提供了两个方法：load 和 update，并保证了其原子性。update 在修改 bt 文件内容时，没有直接对 bt 文件进行修改，而是首先将内容写入一个 bt_tmp 文件中，随后将这个文件重命名为 bt 文件。以期通过操作系统重命名文件的原子性，来保证操作的原子性。<br>
+<br>
+
+修改文件名：
+```java
+Files.move(tmp.toPath(), new File(path+BOOTER_SUFFIX).toPath(), StandardCopyOption.REPLACE_EXISTING);
+```
+
+REPLACE_EXISTING：Replace an existing file if it exists.
+
+
+Table类中parseWhere()方法的核心就是通过where条件中的数据来确定左右边界，再根据B+树中的search()方法来找到符合where条件的数据。一个很需要注意的点，由于是专门利用有索引的字段进行parseWhere，所以该字段的value就是B+树的key，左右边界也是这样的值。<br>
+<br>
+
+读取数据（read()方法）用的也只是B+树，在MYDB中，只有通过索引才能读取数据，通过其他字段是无法读取的。同样，插入时（insert()方法）也只是插入到B+树中就完成了，当然，插入需要用到key和uid，key就在输入数据中，输入的一行数据中，索引字段部分的值就是key，利用它以及uid（通过利用VM将输入数据写入磁盘来得到）就可插入到B+树中。<br>
+<br>
+
+delete直接借助VM中的delete方法来删除，不用操作B+树了？<br>
+<br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
