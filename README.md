@@ -390,18 +390,39 @@ assertThrows(RuntimeException.class, ()->lt.add(1, 2));
 <br>
 
 
+Tokenizer 类，对语句进行逐字节解析，根据空白符或者上述词法规则，将语句切割成多个 token。对外提供了 peek()、pop() 方法方便取出 Token 进行解析。<br>
+<br>
+
+Parser 类则直接对外提供了 Parse(byte[] statement) 方法，核心就是一个调用 Tokenizer 类分割 Token，并根据词法规则包装成具体的 Statement 类并返回。<br>
+<br>
+
+
+### 字段与表管理
+
+由于 TBM 基于 VM，单个字段信息和表信息都是直接保存在 Entry 中。字段的二进制表示如下：
+```
+[FieldName][TypeName][IndexUid]
+```
+
+
+FieldName和TypeName，以及后面的表名，都是以字符串的形式储存的，这里规定这些字符串的存储方式，以明确其存储边界。
+```
+[StringLength][StringData]
+```
 
 
 
+TypeName 为字段的类型，限定为 int32、int64 和 string 类型。如果这个字段有索引，那个 IndexUID 指向了索引二叉树的根，否则该字段为 0。<br>
+<br>
+
+**疑问之处：在parseSelf()方法内多减了个8，不确定是否正确！！！**
 
 
-
-
-
-
-
-
-
+一个数据库中存在多张表，TBM 使用链表的形式将其组织起来，每一张表都保存一个指向下一张表的 UID。表的二进制结构如下：
+```
+[TableName][NextTable]
+[Field1Uid][Field2Uid]...[FieldNUid]
+```
 
 
 
