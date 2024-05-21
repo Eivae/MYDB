@@ -439,6 +439,8 @@ MYDB 使用 Booter 类和 bt 文件，来管理 MYDB 的启动信息，虽然现
 Booter 类对外提供了两个方法：load 和 update，并保证了其原子性。update 在修改 bt 文件内容时，没有直接对 bt 文件进行修改，而是首先将内容写入一个 bt_tmp 文件中，随后将这个文件重命名为 bt 文件。以期通过操作系统重命名文件的原子性，来保证操作的原子性。<br>
 <br>
 
+需要注意的是，在创建新表时，采用的是头插法，所以每次创建表都需要更新 Booter 文件。这就像哈希表中插入时一样，哈希冲突时把同一个桶中的元素（Entry？）变成链表，这个链表也是采用头插法，这样的话下次插入时就不用遍历到链表最后一位再插入，提高效率。
+
 修改文件名：
 ```java
 Files.move(tmp.toPath(), new File(path+BOOTER_SUFFIX).toPath(), StandardCopyOption.REPLACE_EXISTING);
