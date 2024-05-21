@@ -456,9 +456,56 @@ Table类中parseWhere()方法的核心就是通过where条件中的数据来确�
 delete直接借助VM中的delete方法来删除，不用操作B+树了？<br>
 <br>
 
+update()方法的思路大概是，先用VM中的delete方法，再用VM中的insert方法，最后再在B+树中插入新数据（原来那个不用删？）<br>
+<br>
 
 
 
+
+# 服务端客户端的实现及其通信规则
+
+NYDB 被设计为 C/S 结构，类似于 MySQL。通过 socket 通信<br>
+<br>
+
+传输的最基本结构，是 Package：
+```java
+public class Package {
+    byte[] data;
+    Exception err;
+}
+```
+
+
+编码和解码的规则如下：
+```
+[Flag][data]
+```
+
+编码之后的信息会通过 Transporter 类，写入输出流发送出去。<br>
+<br>
+
+为了避免特殊字符造成问题，这里会将数据转成十六进制字符串（Hex String），并为信息末尾加上换行符。这样在发送和接收数据时，就可以很简单地使用 BufferedReader 和 Writer 来直接按行读写了。<br>
+<br>
+
+将字节数组或字符串转换为16进制可以用 org.apache.commons.codec.binary 包，也可以将16进制转换为2进制，在pom.xml中引入以下依赖即可：
+```xml
+<dependency>
+  <groupId>commons-codec</groupId>
+  <artifactId>commons-codec</artifactId>
+  <version>1.15</version>
+</dependency>
+```
+
+比如，`Hex.encodeHexString(buf, true)+"\n"`<br>
+<br>
+
+
+
+服务器做的事很简单，就是根据客户端传过来（send）的数据，调用Executor中的execute()方法执行TBM中的那些方法（见TBM接口）：begin、commit、abort、show、create、insert、read、update、delete。TBM中的这些方法的实现又是通过调用VM中的方法以及B+tree中的insert、search等方法来实现的。<br>
+<br>
+
+Client类中主要就是一个execute()方法，用于处理输入的命令。Client类不是单独使用的，而是在Shell类（Shell里有一个while(true)循环）中使用，Shell是用来读入用户的输入（用Scanner.nextLine()方法），并调用 Client.execute()<br>
+<br>
 
 
 
